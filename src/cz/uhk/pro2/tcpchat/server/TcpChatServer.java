@@ -11,6 +11,7 @@ import java.util.List;
 
 public class TcpChatServer implements MessageBroacaster {
     final List<Socket> connectedClients = new ArrayList<>();
+    Socket connectedClient;
 
     public static void main(String[] args) {
         TcpChatServer s = new TcpChatServer();
@@ -21,7 +22,7 @@ public class TcpChatServer implements MessageBroacaster {
         try {
             ServerSocket socket = new ServerSocket(5000);
             while (true) {
-                Socket connectedClient = socket.accept();
+                connectedClient = socket.accept();
                 System.out.println("New client connected " + connectedClient);
                 synchronized (connectedClients) {
                     connectedClients.add(connectedClient);
@@ -39,12 +40,14 @@ public class TcpChatServer implements MessageBroacaster {
         // TODO DU 3.11.2020 neposilat zpravu tomu, kdo ji odeslal (puvodci)
         synchronized (connectedClients) {
             for (Socket s : connectedClients) {
-                try {
-                    OutputStream os = s.getOutputStream();
-                    PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
-                    w.println(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if(s != connectedClient && !s.isClosed()){
+                    try {
+                        OutputStream os = s.getOutputStream();
+                        PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
+                        w.println(message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
