@@ -1,9 +1,6 @@
 package cz.uhk.pro2.tcpchat.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -13,26 +10,34 @@ public class TcpServerUserThread extends Thread {
     private final Socket connectedClientSocket;
     private final MessageBroacaster broacaster;
 
+
     public TcpServerUserThread(Socket connectedClientSocket, MessageBroacaster broadcaster) {
         this.connectedClientSocket = connectedClientSocket;
         this.broacaster = broadcaster;
     }
 
-    @Override
     public void run() {
         try {
             InputStream is = connectedClientSocket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-
             String message;
-            while ((message  = reader.readLine()) != null) {
-                // TODO DU 3.11.2020
-                //    zprava "/time" od klienta -> odpovime mu, kolik je hodin
-                //    zprava "/quit" od klienta -> ukoncime komunikaci s klientem (vyskocime z while cyklu)
-                System.out.println("New message received: " + message + " " + connectedClientSocket);
-                broacaster.broadcastMessage(message);
+            while ((message = reader.readLine()) != null) {
+                System.out.println("New message recieved: " + message);
+                OutputStream os = connectedClientSocket.getOutputStream();
+                PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
+                switch (message) {
+                    case "/time":
+                        w.println(java.time.LocalTime.now());
+                        break;
+                    case "/quit":
+                        reader.close();
+                        return;
+                    default:
+                        broacaster.broadcastMessage(message, connectedClientSocket);
+                        break;
+                }
             }
-            System.out.println("UserThread ended " + connectedClientSocket);
+            System.out.println("User thread ended " + connectedClientSocket);
         } catch (IOException e) {
             e.printStackTrace();
         }
