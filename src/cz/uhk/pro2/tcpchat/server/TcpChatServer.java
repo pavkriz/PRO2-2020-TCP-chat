@@ -27,6 +27,11 @@ public class TcpChatServer implements MessageBroacaster {
                     connectedClients.add(connectedClient);
                 }
                 TcpServerUserThread t = new TcpServerUserThread(connectedClient, this);
+                t.addListener(() -> {
+                    synchronized (connectedClients) {
+                        connectedClients.remove(connectedClient);
+                    }
+                });
                 t.start();
             }
         } catch (IOException e) {
@@ -35,16 +40,17 @@ public class TcpChatServer implements MessageBroacaster {
     }
 
     @Override
-    public void broadcastMessage(String message) {
-        // TODO DU 3.11.2020 neposilat zpravu tomu, kdo ji odelal (puvodci)
+    public void broadcastMessage(String message, Socket sender) {
         synchronized (connectedClients) {
             for (Socket s : connectedClients) {
-                try {
-                    OutputStream os = s.getOutputStream();
-                    PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
-                    w.println(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if(!s.equals(sender)) {
+                    try {
+                        OutputStream os = s.getOutputStream();
+                        PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
+                        w.println(message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
