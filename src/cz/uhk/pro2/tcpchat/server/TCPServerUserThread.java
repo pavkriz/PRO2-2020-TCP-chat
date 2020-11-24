@@ -31,14 +31,14 @@ public class TCPServerUserThread extends Thread {
             String message;
             while ((message = reader.readLine()) != null) {
                 if (message.equals("/time")) {
-                    broadcaster.broadcastMessage("Nyni je: " + ZonedDateTime.now(ZoneId.of("Europe/Prague")).format(DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.uuuu")));
+                    broadcaster.broadcastMessage("Nyni je: " + ZonedDateTime.now(ZoneId.of("Europe/Prague")).format(DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.uuuu")),connectedClientSocket);
                 }
                 if (message.equals("/quit")) {
-                    broadcaster.broadcastMessage("Sbohem");
+                    broadcaster.broadcastMessage("Sbohem",connectedClientSocket);
                     break;
                 }
                 System.out.println("New message received " + message + " " + connectedClientSocket);
-                broadcaster.broadcastMessage(message);
+                broadcaster.broadcastMessage(message,connectedClientSocket);
             }
             System.out.println("User thread ended " + connectedClientSocket);
         } catch (IOException e) {

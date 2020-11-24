@@ -36,22 +36,18 @@ public class TCPChatServer implements MessageBroadcaster {
     }
 
     @Override
-    public void broadcastMessage(String message) {
-        //todo neposilat zpravu puvodci zpravy - socket - zdrojovy port - najit a vyjmout ho
+    public void broadcastMessage(String message, Socket sourceSocket) {
         synchronized (connectedClients) {
             for (Socket s : connectedClients) {
-                OutputStream os = null;
+                if (s.getPort() == sourceSocket.getPort())
+                    continue;
                 try {
-                    connectedClients.get(0).getPort(); // porty tech v seznamu
-                    s.getPort(); // port toho socketu co prisel = port odesilatele a continue
-                    if (s.getPort() == connectedClients.get(0).getPort())
-                        continue;
-                    os = s.getOutputStream();
+                    OutputStream os = s.getOutputStream();
+                    PrintWriter writer = new PrintWriter(new OutputStreamWriter(os),true); // autoflush buffer - jinak by se to v nem ukladalo, ale nevypisovalo
+                    writer.println(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                PrintWriter writer = new PrintWriter(new OutputStreamWriter(os),true); // autoflush buffer - jinak by se to v nem ukladalo, ale nevypisovalo
-                writer.println(message);
             }
         }
     }
