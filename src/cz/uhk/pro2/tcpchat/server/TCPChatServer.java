@@ -42,6 +42,10 @@ public class TCPChatServer implements MessageBroadcaster {
             for (Socket s : connectedClients) {
                 OutputStream os = null;
                 try {
+                    connectedClients.get(0).getPort(); // porty tech v seznamu
+                    s.getPort(); // port toho socketu co prisel = port odesilatele a continue
+                    if (s.getPort() == connectedClients.get(0).getPort())
+                        continue;
                     os = s.getOutputStream();
                 } catch (IOException e) {
                     e.printStackTrace();

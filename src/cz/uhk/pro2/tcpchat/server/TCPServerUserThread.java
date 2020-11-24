@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * thread that handles a single connected client
@@ -27,8 +30,13 @@ public class TCPServerUserThread extends Thread {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is)); // readline() hazi null kdyz dojde na konec souboru/nebo spojeni, je to jedno
             String message;
             while ((message = reader.readLine()) != null) {
-                //todo pokud bude zprava od klienta př. "/time" - nerozesle se ostatnim, ale server mu vrati kolik je hodin - takovy jakoze chatbot
-                // todo zprava od klienta "/quit" - ukoncime komunikaci s klientem - vyskocime z while cyklu
+                if (message.equals("/time")) {
+                    broadcaster.broadcastMessage("Nyni je: " + ZonedDateTime.now(ZoneId.of("Europe/Prague")).format(DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.uuuu")));
+                }
+                if (message.equals("/quit")) {
+                    broadcaster.broadcastMessage("Sbohem");
+                    break;
+                }
                 System.out.println("New message received " + message + " " + connectedClientSocket);
                 broadcaster.broadcastMessage(message);
             }
