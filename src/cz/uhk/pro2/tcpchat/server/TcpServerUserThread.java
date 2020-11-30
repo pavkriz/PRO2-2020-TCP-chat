@@ -2,45 +2,47 @@ package cz.uhk.pro2.tcpchat.server;
 
 import java.io.*;
 import java.net.Socket;
-import java.time.LocalTime;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
-/**
- * Thread that handles a single connected client
- */
 public class TcpServerUserThread extends Thread {
-    private final Socket connectedClientSocket;
-    private final MessageBroacaster broacaster;
-
-    public TcpServerUserThread(Socket connectedClientSocket, MessageBroacaster broadcaster) {
-        this.connectedClientSocket = connectedClientSocket;
-        this.broacaster = broadcaster;
+    private final Socket connectedClient;
+    private final MessageBroadcaster tcpChatServer;
+    public TcpServerUserThread(Socket connectedClient, MessageBroadcaster tcpChatServer) {
+        this.connectedClient = connectedClient;
+        this.tcpChatServer = tcpChatServer;
     }
 
     @Override
     public void run() {
         try {
-            InputStream is = connectedClientSocket.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            InputStream inputStream = connectedClient.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String message;
-
-            while ((message  = reader.readLine()) != null) {
-                switch (message){
-                    case "/time":
-                        OutputStream outputStream = connectedClientSocket.getOutputStream();
-                        PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(outputStream), true);
-                        printWriter.println(LocalTime.now());
-                        break;
-                    case "/quit":
-                        reader.close();
-                        break;
-                    default:
-                        broacaster.broadcastMessage(message + " Wrong command!");
-                        break;
+            while (!connectedClient.isClosed() && (message = reader.readLine()) != null) {
+                System.out.println("New message: " + message + " " + connectedClient);
+                switch (message.toLowerCase()) {
+                    case "/time" -> writeMessage(connectedClient, "Actual time: " + (new Date()).toString());
+                    case "/quit" -> {
+                        writeMessage(connectedClient, "Logging out...");
+                        connectedClient.close();
+                    }
+                    default -> tcpChatServer.broadcastMessage(connectedClient, message);
                 }
-                System.out.println("New message received: " + message + " " + connectedClientSocket);
-                broacaster.broadcastMessage(message);
             }
-            System.out.println("UserThread ended " + connectedClientSocket);
+            System.out.println("User " + connectedClient + " has been disconnected.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void writeMessage(Socket socket, String message) {
+        try {
+            OutputStream os = socket.getOutputStream();
+            PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
+            w.println(message);
         } catch (IOException e) {
             e.printStackTrace();
         }

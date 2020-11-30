@@ -1,5 +1,7 @@
 package cz.uhk.pro2.tcpchat.server;
 
-public interface MessageBroacaster {
-    void broadcastMessage(String message);
+import java.net.Socket;
+
+interface MessageBroadcaster {
+    void broadcastMessage(Socket sender, String message);
 }

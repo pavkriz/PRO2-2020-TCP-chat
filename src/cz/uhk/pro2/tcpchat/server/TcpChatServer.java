@@ -9,25 +9,23 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TcpChatServer implements MessageBroacaster {
-    final List<Socket> connectedClients = new ArrayList<>();
-    Socket connectedClient;
-
+public class TcpChatServer implements MessageBroadcaster {
+    final List<Socket> connectedClients = new ArrayList<Socket>();
     public static void main(String[] args) {
+        System.out.println("TCP Server init");
         TcpChatServer s = new TcpChatServer();
         s.start();
     }
-
-    private void start() {
+    public void start() {
         try {
             ServerSocket socket = new ServerSocket(5000);
             while (true) {
-                connectedClient = socket.accept();
-                System.out.println("New client connected " + connectedClient);
+                Socket connectedClient = socket.accept();
+                System.out.println("New connected client: " + connectedClient.getRemoteSocketAddress().toString());
                 synchronized (connectedClients) {
                     connectedClients.add(connectedClient);
                 }
-                TcpServerUserThread t = new TcpServerUserThread(connectedClient, this);
+                TcpServerUserThread t = new TcpServerUserThread(connectedClient,this);
                 t.start();
             }
         } catch (IOException e) {
@@ -36,18 +34,18 @@ public class TcpChatServer implements MessageBroacaster {
     }
 
     @Override
-    public void broadcastMessage(String message) {
-        // TODO DU 3.11.2020 neposilat zpravu tomu, kdo ji odeslal (puvodci)
+    public void broadcastMessage(Socket sender, String message) {
         synchronized (connectedClients) {
-            for (Socket s : connectedClients) {
-                if(s != connectedClient && !s.isClosed()){
-                    try {
-                        OutputStream os = s.getOutputStream();
-                        PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
-                        w.println(message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            for (Socket connectedClient : connectedClients) {
+                if(connectedClient == sender) {
+                    continue;
+                }
+                try {
+                    OutputStream os = connectedClient.getOutputStream();
+                    PrintWriter w = new PrintWriter(new OutputStreamWriter(os),true);
+                    w.println(message);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
