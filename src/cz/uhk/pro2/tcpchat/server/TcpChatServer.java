@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TcpChatServer implements MessageBroacaster {
+public class TcpChatServer implements MessageBroadcaster {
     final List<Socket> connectedClients = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -19,7 +19,7 @@ public class TcpChatServer implements MessageBroacaster {
 
     private void start() {
         try {
-            ServerSocket socket = new ServerSocket(5000);
+            ServerSocket socket = new ServerSocket(8080);
             while (true) {
                 Socket connectedClient = socket.accept();
                 System.out.println("New client connected " + connectedClient);
@@ -39,6 +39,7 @@ public class TcpChatServer implements MessageBroacaster {
         // TODO DU 3.11.2020 neposilat zpravu tomu, kdo ji odelal (puvodci)
         synchronized (connectedClients) {
             for (Socket s : connectedClients) {
+                //if(s == 55)
                 try {
                     OutputStream os = s.getOutputStream();
                     PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
