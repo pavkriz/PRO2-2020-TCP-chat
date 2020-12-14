@@ -1,5 +1,6 @@
 package cz.uhk.pro2.tcpchat.server;
 
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -10,7 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TcpChatServer implements MessageBroacaster {
-    final List<Socket> connectedClients = new ArrayList<>();
+    List<Socket> connectedClients = new ArrayList<>();
+    Socket connnectedClient;
 
     public static void main(String[] args) {
         TcpChatServer s = new TcpChatServer();
@@ -20,10 +22,10 @@ public class TcpChatServer implements MessageBroacaster {
     private void start() {
         try {
             ServerSocket socket = new ServerSocket(5000);
-            while (true) {
+            while (true){
                 Socket connectedClient = socket.accept();
                 System.out.println("New client connected " + connectedClient);
-                synchronized (connectedClients) {
+                synchronized (connectedClients){
                     connectedClients.add(connectedClient);
                 }
                 TcpServerUserThread t = new TcpServerUserThread(connectedClient, this);
@@ -36,15 +38,18 @@ public class TcpChatServer implements MessageBroacaster {
 
     @Override
     public void broadcastMessage(String message) {
-        // TODO DU 3.11.2020 neposilat zpravu tomu, kdo ji odelal (puvodci)
+        //  TODO 3.11. neposílat zprávu tomu, kdo ji odeslal (původci)
+
         synchronized (connectedClients) {
             for (Socket s : connectedClients) {
-                try {
-                    OutputStream os = s.getOutputStream();
-                    PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
-                    w.println(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (s != connnectedClient && !s.isClosed()) {
+                    try {
+                        OutputStream os = s.getOutputStream();
+                        PrintWriter w = new PrintWriter(new OutputStreamWriter(os), true);
+                        w.println(message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

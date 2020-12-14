@@ -1,17 +1,19 @@
 package cz.uhk.pro2.tcpchat.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.Socket;
 
 /**
  * Thread that handles a single connected client
  */
+
+import java.io.*;
+import java.net.Socket;
+import java.time.LocalTime;
+
 public class TcpServerUserThread extends Thread {
+
     private final Socket connectedClientSocket;
     private final MessageBroacaster broacaster;
+
 
     public TcpServerUserThread(Socket connectedClientSocket, MessageBroacaster broadcaster) {
         this.connectedClientSocket = connectedClientSocket;
@@ -25,10 +27,20 @@ public class TcpServerUserThread extends Thread {
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
             String message;
-            while ((message  = reader.readLine()) != null) {
-                // TODO DU 3.11.2020
-                //    zprava "/time" od klienta -> odpovime mu, kolik je hodin
-                //    zprava "/quit" od klienta -> ukoncime komunikaci s klientem (vyskocime z while cyklu)
+            while ((message = reader.readLine()) != null){
+                // TODO "/time" od klienta -> odpovíme mu, kolik je hodin
+                //  "/quit" od klienta -> ukončíme komunikaci s klientem (vyskočíme z while cyklu)
+                switch (message){
+                    case "/time":
+                        OutputStream outputStream = connectedClientSocket.getOutputStream();
+                        PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(outputStream), true);
+                        printWriter.println(LocalTime.now());
+                        break;
+                    case "/quit":
+                        reader.close();
+                        break;
+                }
+
                 System.out.println("New message received: " + message + " " + connectedClientSocket);
                 broacaster.broadcastMessage(message);
             }
